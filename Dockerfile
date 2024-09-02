@@ -10,11 +10,11 @@ WORKDIR /app
 # Копируем файлы pyproject.toml и poetry.lock для установки зависимостей
 COPY pyproject.toml poetry.lock ./
 
-# Устанавливаем зависимости
-RUN poetry config virtualenvs.create false && poetry install --only main
-
 # Копируем весь проект в контейнер
 COPY . .
+
+# Устанавливаем зависимости
+RUN poetry config virtualenvs.create false && poetry install --only main
 
 # Экспонируем порт 8083
 EXPOSE 8083
