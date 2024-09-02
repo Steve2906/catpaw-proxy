@@ -1,0 +1,30 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      
+    - name: Build the Docker image
+      run: docker build --no-cache -t vladislavnikolaev/catpaw_proxy:latest --file Dockerfile .
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v1
+      with:
+        username: vladislavnikolaev
+        password: dckr_pat_urOBtSgj44Vj4Gom2fr92JtoB9Q
+
+    - name: Push the Docker image
+      run: docker push vladislavnikolaev/catpaw_proxy:latest
+      
