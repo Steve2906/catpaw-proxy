@@ -13,6 +13,9 @@ COPY pyproject.toml poetry.lock ./
 # Копируем весь проект в контейнер
 COPY . .
 
+# Устанавливаем переменную окружения для Flask
+ENV FLASK_APP=src/main.py  # Укажите путь к вашему основному файлу приложения Flask
+
 # Устанавливаем зависимости
 RUN poetry config virtualenvs.create false && poetry install --only main
 
