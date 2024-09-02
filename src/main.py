@@ -1,6 +1,7 @@
-from flask import Flask, request, Response, abort
+from flask import Flask, request, Response
 import requests
 import logging
+from urllib.parse import urljoin
 
 app = Flask(__name__)
 
@@ -27,20 +28,20 @@ def proxy():
         # Прокси запрос на целевой URL
         response = requests.get(target_url)
 
+        # Переписывание путей к статическим ресурсам
+        content = response.text
+        base_url = target_url.rsplit('/', 1)[0] + '/'
+        content = content.replace('src="/', f'src="{urljoin(base_url, "/")}')
+        content = content.replace('href="/', f'href="{urljoin(base_url, "/")}')
+        
         # Логирование успешного запроса
         app.logger.info(f"Successfully proxied request to: {target_url}")
         
-        # Возвращение оригинального контента обратно клиенту
-        return Response(response.content, status=response.status_code, content_type=response.headers.get('Content-Type'))
+        # Возвращение измененного контента обратно клиенту
+        return Response(content, status=response.status_code, content_type=response.headers.get('Content-Type'))
     except requests.exceptions.RequestException as e:
         app.logger.error(f"Error during proxying: {e}")
         return f"Error: {str(e)}", 500
-
-# Обработка некорректного маршрута
-@app.route('/proxy')
-def proxy_no_slash():
-    app.logger.warning("Запрос к /proxy без завершающего слэша")
-    abort(404)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8083)
