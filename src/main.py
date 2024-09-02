@@ -1,46 +1,32 @@
 from flask import Flask, request, Response
 import requests
-import logging
-from urllib.parse import urljoin
 
 app = Flask(__name__)
-
-# Настройка логирования
-logging.basicConfig(level=logging.INFO)
 
 @app.route('/proxy/')
 def proxy():
     target_url = request.args.get('url')
     
     if not target_url:
-        app.logger.warning("Запрос без URL")
         return "URL is required", 400
-
-    # Логирование поступившего URL
-    app.logger.info(f"Received URL to proxy: {target_url}")
-
-    # Убедитесь, что URL начинается с 'http://' или 'https://'
-    if not target_url.startswith(('http://', 'https://')):
-        app.logger.warning(f"Некорректный URL: {target_url}")
-        return "Invalid URL: URL must start with 'http://' or 'https://'", 400
-
+    
     try:
-        # Прокси запрос на целевой URL
+        # Проксируем запрос на целевой URL
         response = requests.get(target_url)
-
-        # Переписывание путей к статическим ресурсам
-        content = response.text
-        base_url = target_url.rsplit('/', 1)[0] + '/'
-        content = content.replace('src="/', f'src="{urljoin(base_url, "/")}')
-        content = content.replace('href="/', f'href="{urljoin(base_url, "/")}')
+        headers = dict(response.headers)
         
-        # Логирование успешного запроса
-        app.logger.info(f"Successfully proxied request to: {target_url}")
+        # Удаляем заголовки, которые могут помешать отображению и работе контента в iframe
+        headers.pop('X-Frame-Options', None)
+        headers.pop('Content-Security-Policy', None)
+        headers.pop('Access-Control-Allow-Origin', None)
+        headers.pop('Strict-Transport-Security', None)
         
-        # Возвращение измененного контента обратно клиенту
-        return Response(content, status=response.status_code, content_type=response.headers.get('Content-Type'))
+        # Дополнительно можем добавить заголовок для разрешения CORS, если необходимо
+        headers['Access-Control-Allow-Origin'] = '*'
+        
+        # Возвращаем проксированный ответ
+        return Response(response.content, headers=headers, status=response.status_code)
     except requests.exceptions.RequestException as e:
-        app.logger.error(f"Error during proxying: {e}")
         return f"Error: {str(e)}", 500
 
 if __name__ == "__main__":
