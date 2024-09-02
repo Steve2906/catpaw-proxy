@@ -1,4 +1,4 @@
-from flask import Flask, request, Response
+from flask import Flask, request, Response, abort
 import requests
 import logging
 
@@ -7,7 +7,7 @@ app = Flask(__name__)
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
 
-@app.route('/proxy')
+@app.route('/proxy/')
 def proxy():
     target_url = request.args.get('url')
     
@@ -35,6 +35,12 @@ def proxy():
     except requests.exceptions.RequestException as e:
         app.logger.error(f"Error during proxying: {e}")
         return f"Error: {str(e)}", 500
+
+# Обработка некорректного маршрута
+@app.route('/proxy')
+def proxy_no_slash():
+    app.logger.warning("Запрос к /proxy без завершающего слэша")
+    abort(404)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8083)
