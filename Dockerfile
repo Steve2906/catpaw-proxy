@@ -14,7 +14,7 @@ COPY pyproject.toml poetry.lock ./
 COPY . .
 
 # Устанавливаем переменную окружения для Flask
-ENV FLASK_APP=src/main.py  # Укажите путь к вашему основному файлу приложения Flask
+ENV FLASK_APP=src/main.py
 
 # Устанавливаем зависимости
 RUN poetry config virtualenvs.create false && poetry install --only main
